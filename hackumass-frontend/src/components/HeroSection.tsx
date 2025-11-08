@@ -14,14 +14,14 @@ export default function HeroSection({ onCallClick }: HeroSectionProps) {
       <img
         src="/assets/ai.jpg"
         alt="AI Illustration"
-        className="absolute left-8 bottom-10 w-80 md:w-[28rem] opacity-90 select-none"
+        className="absolute left-8 bottom-10 w-72 md:w-[24rem] opacity-90 select-none"
       />
 
       {/* Right Image (Megaphone Graphic) */}
       <img
         src="/assets/megaphone.jpg"
         alt="Megaphone Illustration"
-        className="absolute right-[-3rem] bottom-6 w-56 md:w-72 opacity-90 select-none"
+        className="absolute right-[-1rem] bottom-6 w-56 md:w-72 opacity-90 select-none"
       />
 
       {/* Center Content */}
