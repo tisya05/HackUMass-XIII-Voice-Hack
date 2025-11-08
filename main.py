@@ -8,17 +8,16 @@ import time
 import re
 from pydub import AudioSegment
 from pydub.playback import _play_with_simpleaudio
+from ip_utils import start_ip_check
+from context_manager import process_user_message, clear_session
 
 load_dotenv()
 
 # --- API Keys ---
-import google.generativeai as genai
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 ELEVEN_API_KEY = os.getenv("ELEVEN_API_KEY")
 
-# --- Initialize recognizer and model ---
+# --- Initialize recognizer ---
 recognizer = sr.Recognizer()
-model_name = "models/gemini-2.5-flash-lite"
 
 # --- Global flags ---
 stop_audio_flag = False
@@ -64,28 +63,19 @@ def play_audio_interruptible(file_path):
             break
         time.sleep(0.05)
 
-# --- Gemini text generation ---
-def gemini_reply(prompt):
-    model = genai.GenerativeModel(model_name)
-    response = model.generate_content(prompt)
-    text = response.text
-    print("🤖 Gemini:", text)
-    return text
-
 # --- Speak Gemini response in chunks ---
 def speak_text_interruptible(prompt):
-    """Generate Gemini response and speak in chunks, can be interrupted."""
-    cleanup_audio_files()  # delete previous response files
-    text = gemini_reply(prompt)
-    chunks = re.split(r'(?<=[.?!])\s+', text)
+    """Generate Gemini response via context_manager and speak it chunk by chunk."""
+    cleanup_audio_files()  # remove old audio
+    text = process_user_message(prompt)  # NEW: use context manager
 
+    chunks = re.split(r'(?<=[.?!])\s+', text)
     global stop_audio_flag
-    stop_audio_flag = False  # start playing this response
+    stop_audio_flag = False
 
     for i, chunk in enumerate(chunks):
         if not chunk.strip():
             continue
-        # stop if user spoke mid-response
         if stop_audio_flag:
             break
         audio_file = elevenlabs_tts(chunk, filename=f"chunk_{i}.mp3")
@@ -105,7 +95,7 @@ def listen_loop():
                 if user_input.strip():
                     print("📝 You said:", user_input)
 
-                    # stop currently playing Gemini audio
+                    # stop currently playing audio
                     stop_audio_flag = True
                     if audio_thread and audio_thread.is_alive():
                         audio_thread.join()
@@ -122,6 +112,20 @@ def listen_loop():
                 listening = False
                 break
 
+# --- IP Geolocation callback ---
+def ip_callback(info):
+    geo = info.get("geolocation", {})
+    country = geo.get("country")
+    org = geo.get("org") or geo.get("isp") or ""
+    if "Vultr" in org or "Vultr" in geo.get("as", ""):
+        print("Detected Vultr cloud — consider low-latency region routing.")
+
 # --- Main ---
 if __name__ == "__main__":
-    listen_loop()
+    try:
+        from context_manager import init_ip_location
+        init_ip_location()  
+        start_ip_check(callback=ip_callback)
+        listen_loop()
+    finally:
+        clear_session()
