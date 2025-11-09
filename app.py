@@ -1,47 +1,79 @@
-# main_ver = "mock_main.py"
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
-from mock_main import process_user_message, elevenlabs_tts, cleanup_audio_files
-import os
-import uuid
-
-
+import threading
+import json
+from mock_main import listen_loop, stop_audio_flag, cleanup_audio_files
 
 app = Flask(__name__)
-CORS(app)
 
-# Make sure static folder exists
-os.makedirs("static", exist_ok=True)
+CORS(app, resources={r"/*": {"origins": "*"}})  # ← This is CRUCIAL
+
+is_listening = False
+listen_thread = None
+
+# --- Shared state storage ---
+conversation_state = {
+    "last_response": "",
+    "locations": [],
+    "summary": []
+}
+
 
 @app.route("/")
-def index():
-    return "RES-Q backend is running ✅"
+def home():
+    return jsonify({"message": "RES-Q backend running"})
 
-@app.route("/process_text", methods=["POST"])
-def process_text():
-    data = request.get_json()
-    user_text = data.get("text", "").strip()
 
-    if not user_text:
-        return jsonify({"error": "Empty text"}), 400
+@app.route("/start_listening", methods=["POST"])
+def start_listening():
+    global is_listening, listen_thread
+    if is_listening:
+        return jsonify({"status": "already listening"}), 200
 
+    is_listening = True
+
+    def run_listening():
+        from mock_main import set_callback
+
+        # callback from mock_main when AI responds
+        def on_ai_response(text):
+            conversation_state["last_response"] = text
+            # Mock extraction for demo
+            conversation_state["locations"] = [
+                "Community Center - 123 Main St",
+                "City Hall Shelter - 456 Oak Ave"
+            ]
+            conversation_state["summary"] = [
+                "earthquake", "Amherst", "evacuation", "help"
+            ]
+            with open("conversation_state.json", "w") as f:
+                json.dump(conversation_state, f)
+
+        set_callback(on_ai_response)
+        listen_loop()
+
+    listen_thread = threading.Thread(target=run_listening, daemon=True)
+    listen_thread.start()
+    return jsonify({"status": "started"}), 200
+
+
+@app.route("/stop_listening", methods=["POST"])
+def stop_listening():
+    global is_listening, stop_audio_flag
+    is_listening = False
+    stop_audio_flag = True
+    cleanup_audio_files()
+    return jsonify({"status": "stopped"}), 200
+
+
+@app.route("/get_latest_response", methods=["GET"])
+def get_latest_response():
     try:
-        # 1. Process user message using Gemini logic
-        ai_response = process_user_message(user_text)
-
-        # 2. Generate TTS using ElevenLabs
-        audio_filename = f"static/audio_{uuid.uuid4().hex}.mp3"
-        elevenlabs_tts(ai_response, filename=audio_filename)
-
-        # 3. Return both text + audio URL
-        return jsonify({
-            "response_text": ai_response,
-            "audio_url": f"http://localhost:5000/{audio_filename}"
-        })
-
-    except Exception as e:
-        print("Error in /process_text:", e)
-        return jsonify({"error": str(e)}), 500
+        with open("conversation_state.json", "r") as f:
+            data = json.load(f)
+        return jsonify(data)
+    except Exception:
+        return jsonify(conversation_state)
 
 
 if __name__ == "__main__":

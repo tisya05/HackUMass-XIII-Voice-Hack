@@ -46,23 +46,23 @@ export default function UpdatesSection() {
 
             <div className="space-y-4 mt-8">
               <div className="border-l-4 border-blue-400 pl-4 py-2">
-                <p className="font-semibold text-white">Weather Alert</p>
+                <p className="font-semibold text-white">State of Emergency with Olympia Place Fire</p>
                 <p className="text-gray-300">
-                  Severe storm warning in effect until 8:00 PM
+                  On Saturday, the Amherst Town Manager Paul Bockelman issued a state of emergency due the fires burning at Olympia place well after Friday night’s inferno. Residents are being urged to stop all non-essential water use due to the fact that over 1 million gallons of water was used in putting out the blaze. Bockleman stated that it will take days for the town’s water supply to recover.
                 </p>
               </div>
 
               <div className="border-l-4 border-blue-400 pl-4 py-2">
-                <p className="font-semibold text-white">Emergency Services</p>
+                <p className="font-semibold text-white">Weather Update</p>
                 <p className="text-gray-300">
-                  All emergency shelters are open and accepting residents
+                  Cloudy with occasional rain showers. High 56F. Winds ENE at 5 to 10 mph. Chance of rain 50%.
                 </p>
               </div>
 
               <div className="border-l-4 border-blue-400 pl-4 py-2">
                 <p className="font-semibold text-white">Traffic Update</p>
                 <p className="text-gray-300">
-                  Highway 101 closed due to flooding — use alternate routes
+                  Light traffic in Amherst, MA
                 </p>
               </div>
             </div>

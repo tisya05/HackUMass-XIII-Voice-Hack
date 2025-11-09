@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import Header from './components/Header';
-import HeroSection from './components/HeroSection';
-import LocationConsentModal from './components/LocationConsentModal';
-import CallInterface from './components/CallInterface';
-import UpdatesSection from './components/UpdatesSection';
-import AboutSection from './components/AboutSection';
+import { useState } from "react";
+import Header from "./components/Header";
+import HeroSection from "./components/HeroSection";
+import LocationConsentModal from "./components/LocationConsentModal";
+import CallInterface from "./components/CallInterface";
+import UpdatesSection from "./components/UpdatesSection";
+import AboutSection from "./components/AboutSection";
 
 function App() {
   const [showConsentModal, setShowConsentModal] = useState(false);
@@ -16,7 +16,8 @@ function App() {
 
   const handleConsent = () => {
     setShowConsentModal(false);
-    setIsCallActive(true);
+    setIsCallActive(true); // Show CallInterface
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleDecline = () => {
@@ -25,14 +26,12 @@ function App() {
 
   const handleEndCall = () => {
     setIsCallActive(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleNavigate = (section: string) => {
     const element = document.getElementById(section);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
+    if (element) element.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
@@ -59,3 +58,4 @@ function App() {
 }
 
 export default App;
+
